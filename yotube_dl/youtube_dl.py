@@ -126,5 +126,5 @@ if __name__ == '__main__':
             print("=" * 50)
             print("\t\t")
         print(time.strftime(format("%Y-%m-%d %H:%M")), "更新")
-        print("*" * 80)
+        print("*" * 100)
         time.sleep(3600)
