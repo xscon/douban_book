@@ -3,15 +3,22 @@ import subprocess
 import time
 import os
 
+
 # 1:目标UP主视频列表地址(Target_list)及对应标题（title）
-Target_list = {"https://www.youtube.com/channel/UCJKv6SFOF7uHjD7ou8gxWFQ/videos": "野合"}
+Target_list = {"https://www.youtube.com/user/tarmax82/videos": "asmr卤蛋哥",
+               "https://www.youtube.com/channel/UCqQfNPBaeuKIZV9GEY1aJ0A/videos": "asmr印度大胡子",
+               "https://www.youtube.com/channel/UCnGUcRIVF98DxWd-NZljAeQ/videos": "asmr印度兄弟",
+               "https://www.youtube.com/channel/UCZlwM3g-F6AkdIZqNBlrPww/videos": "MINI工地",
+               "https://www.youtube.com/channel/UCHPF0OxcMA22CQqDd8Zh4ew/videos": "PithoTv",
+               "https://www.youtube.com/user/SWITCHSCISSORS/videos": "SWITCHSCISSORS",
+               "https://www.youtube.com/channel/UCMrBRvrEMDtGyqjp0U9pxgw/videos":"asmr小胡子"}
 
 ABS_PATH = os.path.dirname(os.path.abspath(__file__))
 DRIVER_PATH = "C:\Program Files (x86)\Google\Chrome\Application\chromedriver.exe"
 # 查询视频信息语句
 COMMAND_PREFIX_CHECK = 'youtube-dl -F '
 # 下载1080p视频语句
-COMMAND_PREFIX_DOWNLOAD = 'youtube-dl -f 137+140 '
+COMMAND_PREFIX_DOWNLOAD = 'youtube-dl -f 137+140 '  # 有些视频不一样 #TODO:这里设置自动读取
 
 
 class YoutubeDL(object):
@@ -22,6 +29,7 @@ class YoutubeDL(object):
         self.Path = ABS_PATH + r'\\' + Target_list[self.target_url]
         self.Txt_path = self.Path + r"\url_list.txt"
         self.url_ilst = []
+        self.have_update = True
 
     def crater_path(self):  # 根据字典生成目录
         try:
@@ -42,9 +50,10 @@ class YoutubeDL(object):
         fobj = open(self.Txt_path, 'a')
         for url in self.url_ilst:
             fobj.write(url + "\n")
+        fobj.close()
 
     def roll_page(self):
-        js = "var q=document.documentElement.scrollTop={}".format(2 * 10000)
+        js = "var q=document.documentElement.scrollTop={}".format(10000)
         self.web_driver.execute_script(js)
         time.sleep(1)
 
@@ -52,8 +61,12 @@ class YoutubeDL(object):
         if os.path.exists(self.Txt_path):
             print("txt文件已存在,将进行更新处理")
             self.check_video_url()
-            for url in self.url_ilst:
-                self.download_by_url(url)
+            if self.have_update:
+                for url in self.url_ilst:
+                    self.download_by_url(url)
+                    subprocess.Popen("move *.mp4 " + ABS_PATH + r'\\' + "更新", shell=True)
+            else:
+                print(Target_list[self.target_url], "没有新内容")
 
         else:
             print("txt文件不存在,将全新下载")
@@ -61,21 +74,25 @@ class YoutubeDL(object):
             self.save_txt()
             for url in self.url_ilst:
                 self.download_by_url(url)
-            subprocess.Popen("move *.mp4 " + r"E:\youtube下载\yotube_dl\野合", shell=True)  # 将视频转移到指定目录
-
+            subprocess.Popen("move *.mp4 " + self.Path, shell=True)  # 将视频转移到指定目录
 
     def check_video_url(self):  # 过滤列表。将无下载的链接放到url_list.txt中，新内容放到开头。
-        print("正在进行更新处理")
         fobj = open(self.Txt_path, 'r+')
         last_url = fobj.readline().strip()
         self.get_video_list()
-        for url in self.url_ilst:
-            if url == last_url:
-                del self.url_ilst[self.url_ilst.index(url):]
-        fobj = open(self.Txt_path, 'a')
-        fobj.seek(0, 0)
-        for url in self.url_ilst:
-            fobj.write(url + "\n")
+        if last_url == self.url_ilst[0]:
+            self.have_update = False
+        else:
+            for url in self.url_ilst:
+                if url == last_url:
+                    del self.url_ilst[self.url_ilst.index(url):]
+            fobj = open(self.Txt_path, 'r+')
+            content = fobj.read()
+            fobj.seek(0, 0)
+            for url in self.url_ilst:
+                fobj.write(url + "\n")
+            fobj.write(content)
+            fobj.close()
 
     """通过网址下载视频"""
     @staticmethod
@@ -100,6 +117,14 @@ class YoutubeDL(object):
         self.check_txt()       # 检查是否有txt,无则重新下载。有则做过滤处理
 
 
-for x in Target_list.keys():
-    t = YoutubeDL(x)
-    t.main()
+if __name__ == '__main__':
+    while True:
+        for x in Target_list.keys():
+            print("=" * 50)
+            t = YoutubeDL(x)
+            t.main()
+            print("=" * 50)
+            print("\t\t")
+        print(time.strftime(format("%Y-%m-%d %H:%M")), "更新")
+        print("*" * 80)
+        time.sleep(3600)
