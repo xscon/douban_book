@@ -1,0 +1,28 @@
+# -*- coding: utf-8 -*-
+import scrapy
+from scrapy.selector import Selector
+from scrapy.http.request import Request
+from scrapy.dupefilters import RFPDupeFilter
+from ..items import ChoutiItem
+
+class CtSpider(scrapy.Spider):
+    name = 'ct'
+    allowed_domains = ['chouti.com']
+    start_urls = ['https://dig.chouti.com/all/hot/recent/1']
+
+    def parse(self, response):
+        print(response.url)
+        html_finder_obj = Selector(response=response)
+        news_cards_finder = html_finder_obj.xpath('//a[@class="show-content color-chag"]')
+        for news_card in news_cards_finder:
+            title = news_card.xpath('./text()').extract_first().strip()
+            url = news_card.xpath('./@href').extract_first()
+            info_obj = ChoutiItem(title=title, url=url)
+            yield info_obj
+
+        """下一页"""
+        next_page_list_finder = html_finder_obj.xpath('//a[@class="ct_pagepa"]/@href').extract()
+        for next_page_finder in next_page_list_finder:
+            full_next_url = "https://dig.chouti.com" + next_page_finder
+            rgs = Request(url=full_next_url, callback=self.parse, dont_filter=False)
+            yield rgs
