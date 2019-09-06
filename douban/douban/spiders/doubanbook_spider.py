@@ -12,8 +12,8 @@ class DoubanbookSpiderSpider(scrapy.Spider):
     # 获得所有目录页
     def parse(self, response):
         page_count = response.xpath('//div[@class="paginator"]/a/text()').extract()[-1]
-        # for page_num in range(1, int(page_count)):
-        for page_num in range(1, 2):
+        for page_num in range(1, int(page_count)):
+        # for page_num in range(1, 2):
             full_cattle_url = response.url + '?start=' + str(page_num)
             yield scrapy.Request(url=full_cattle_url, callback=self.parse_catlle)
 
@@ -32,7 +32,7 @@ class DoubanbookSpiderSpider(scrapy.Spider):
         price = re.search(r'<span class="pl">定价:</span> (.*?)<br/>', response.text).group(1)
         url = response.url
         score = re.search(r'rating_num " property="v:average"> (.*?) </strong>', response.text).group(1)
-        content = '.'.join(response.xpath('//div[@class="intro"]/p[1]/text()').extract())
+        content = '.'.join(response.xpath('//div[@class="intro"]/p/text()').extract())
         item = DoubanItem()
         item['title'] = title
         item['img_url'] = img_url

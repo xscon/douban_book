@@ -19,3 +19,8 @@ class DoubanItem(scrapy.Item):
     score = scrapy.Field()
     content = scrapy.Field()
 
+    def get_insert_sql_and_data(self):
+        insert = 'INSERT INTO douban_book(title,img_url,author,year,page_count,price,url,score,content) ' \
+                 'VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)'
+        data = (self['title'],self['img_url'],self['author'],self['year'],self['page_count'],self['price'],self['url'],self['score'],self['content'])
+        return (insert, data)
